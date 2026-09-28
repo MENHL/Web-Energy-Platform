@@ -1,0 +1,28 @@
+# 本地开发环境配置（root/root 仅用于本地，生产一律用环境变量，见 application-prod.yml）
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/greengrid_admin?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    hikari:
+      pool-name: GreenGridHikariCP
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 3000
+      validation-timeout: 3000
+      max-lifetime: 1800000
+  sql:
+    init:
+      # 开发期每次启动自动执行建表 + 初始化数据（幂等重建）；生产环境 mode=never
+      mode: always
+      encoding: UTF-8
+      schema-locations: classpath:db/schema.sql
+      data-locations: classpath:db/data.sql
+      continue-on-error: false
+
+greengrid:
+  jwt:
+    # 开发签名密钥（>= 32 字节）；生产必须通过环境变量 GG_JWT_SECRET 注入
+    secret: greengrid-dev-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz
+    expire-minutes: 120

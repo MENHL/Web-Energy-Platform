@@ -1,7 +1,7 @@
 /**
  * [工程配置] vite.config.ts —— 全局构建配置
  * 说明：Vue 插件、@ 别名、Ant Design Vue 按需自动引入、SCSS 全局变量注入、
- *      部署基础路径（GitHub Pages 子路径）、分包优化
+ *      部署基础路径（生产默认 /，GitHub Pages 传 VITE_BASE）、开发代理、分包优化
  */
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -10,12 +10,12 @@ import Components from 'unplugin-vue-components/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
 import { fileURLToPath, URL } from 'node:url'
 
-/* 部署基础路径：GitHub Pages 项目站点为 /<仓库名>/，本地开发为 / */
+/* GitHub Pages 项目站点子路径（非必须，生产 Nginx 部署用默认 /） */
 const GITHUB_PAGES_BASE = '/New-Energy-Platform/'
 
 export default defineConfig(({ command }) => ({
-  /* 基础路径：构建时使用 Pages 子路径，开发服务器保持根路径 */
-  base: command === 'build' ? GITHUB_PAGES_BASE : '/',
+  /* 基础路径：生产构建默认 /（Nginx 根路径部署）；GitHub Pages 部署时传 VITE_BASE=/New-Energy-Platform/ */
+  base: command === 'build' ? process.env.VITE_BASE || '/' : '/',
 
   /* 插件：Vue 单文件组件 + Ant Design Vue 按需引入（v4 为 cssinjs 主题，无需额外样式导入） */
   plugins: [
@@ -65,6 +65,13 @@ export default defineConfig(({ command }) => ({
 
   server: {
     port: 5180,
-    open: false
+    open: false,
+    /* 开发代理：/api 转发到后端，注意不要 rewrite（后端 context-path 已是 /api） */
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      }
+    }
   }
 }))

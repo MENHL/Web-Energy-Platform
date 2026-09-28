@@ -1,0 +1,52 @@
+# GreenGrid 后端 + MySQL 8 编排
+# 使用前先复制 .env.example 为 .env 并修改密码/密钥，或直接 export 环境变量
+# 启动：docker compose up -d --build
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: greengrid-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: greengrid_admin
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次初始化：自动建表 + 初始化数据（MySQL 镜像按文件名顺序执行 initdb.d）
+      - ./backend/src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./backend/src/main/resources/db/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p${MYSQL_ROOT_PASSWORD:-root} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./backend
+    container_name: greengrid-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # 数据库连接（密码走环境变量）
+      GG_DB_URL: jdbc:mysql://mysql:3306/greengrid_admin?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+      GG_DB_USERNAME: root
+      GG_DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      # JWT 签名密钥（>= 32 字节，生产务必改）
+      GG_JWT_SECRET: ${GG_JWT_SECRET:-change-me-to-a-long-random-secret-at-least-32-bytes}
+      GG_JWT_EXPIRE_MINUTES: "120"
+      TZ: Asia/Shanghai
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql-data:

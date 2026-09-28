@@ -1,0 +1,38 @@
+# 公共配置（所有环境共享）
+spring:
+  application:
+    name: greengrid-admin-server
+  profiles:
+    active: dev
+  jackson:
+    time-zone: GMT+8
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api          # 前端请求 /api/auth/login -> Controller 写 /auth/login
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    # 开发期打印 SQL；生产 profile 里会覆盖为关闭
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

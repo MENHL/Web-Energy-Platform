@@ -38,3 +38,9 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# 环境变量（.env 含真实密钥不入库；example 与 development 保留提交）
+.env
+.env.*
+!.env.example
+!.env.development
